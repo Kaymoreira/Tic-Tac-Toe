@@ -2,6 +2,20 @@ import {init, play, showGameOver} from './src/game.js'
 import {sleep} from './src/helpers/general.js'
 import {IAPlay} from './src/IA.js'
 
+/*const currentBoard = [
+  ['', '', '', '', '', '', ''],
+  ['', '', '', '', '', '', ''],
+  ['', 'x', 'x', '', '', '', ''],
+  ['', '', 'x', '', '', '', ''],
+  ['', '', '', 'x', '', '', ''],
+  ['', '', '', '', '', '', ''],
+  ['', '', '', '', '', '', '']
+]
+
+const {i, j} = IAPlay(currentBoard, 'x', 'o')
+console.log({i, j})*/
+
+
 let data
 
 const SPACE_SIZE = 64.28571428571429

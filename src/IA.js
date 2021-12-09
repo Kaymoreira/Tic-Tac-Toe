@@ -1,68 +1,121 @@
 import {isTie, isWinner} from './helpers/check.js';
+import {random} from './helpers/general.js'
 
 export function IAPlay(currentBoard, firstPlayer, secondPlayer) {
     // AI to make its turn
-    let bestScore = -Infinity;
-    let move;
+    let moveBasedOnOponent;
+    let moveBasedOnMe;
+
     for (let i = 0; i < 6; i++) {
       for (let j = 0; j < 6; j++) {
-        // Is the spot available?
-        if (currentBoard[i][j] == '') {
-            currentBoard[i][j] = secondPlayer;
-          let score = minimax(currentBoard, 0, secondPlayer, firstPlayer, secondPlayer);
-          currentBoard[i][j] = '';
-          if (score > bestScore) {
-            bestScore = score;
-            move = { i, j };
-          }
-        }
-      }
-    }
-    return move;
-};
-  
-function minimax(board, depth, player, firstPlayer, secondPlayer) {
-    const firstWins = isWinner(board, player, firstPlayer);
-    const secondWins = isWinner(board, player, secondPlayer);
-    const tie = isTie(board);
+        if(currentBoard[i][j] === firstPlayer.character){
+          const bestPlay = getBestPlay(currentBoard, i, j, 1, secondPlayer.character, firstPlayer.character, undefined)
 
-    if(depth >= 2) return 0;
+          if(!moveBasedOnOponent || bestPlay.counter > moveBasedOnOponent.counter) {
+            moveBasedOnOponent = bestPlay;
+          }
+        }
+      }
+    }
+    for (let i = 0; i < 6; i++) {
+      for (let j = 0; j < 6; j++) {
+        if(currentBoard[i][j] === firstPlayer.character){
+          const bestPlay = getBestPlay(currentBoard, i, j, 1, firstPlayer.character, secondPlayer.character, undefined)
 
-    if(firstWins){
-        return 10;
-    }else if(secondWins){
-        return -10;
-    }else if(tie){
-        return 0;
-    }
-  
-    if (player === secondPlayer) {
-      let bestScore = -Infinity;
-      for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < 6; j++) {
-          // Is the spot available?
-          if (board[i][j] == '') {
-            board[i][j] = secondPlayer;
-            let score = minimax(board, depth + 1, player === firstPlayer ? secondPlayer : firstPlayer, firstPlayer, secondPlayer);
-            board[i][j] = '';
-            bestScore = Math.max(score, bestScore);
+          if(!moveBasedOnMe || bestPlay.counter > moveBasedOnMe.counter) {
+            moveBasedOnMe = bestPlay;
           }
         }
       }
-      return bestScore;
-    } else {
-      let bestScore = Infinity;
-      for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < 6; j++) {
-          // Is the spot available?
-          if (board[i][j] == '') {
-            board[i][j] = firstPlayer;
-            let score = minimax(board, depth + 1, player === firstPlayer ? secondPlayer : firstPlayer, firstPlayer, secondPlayer);
-            board[i][j] = '';
-            bestScore = Math.min(score, bestScore);
-          }
-        }
-      }
-      return bestScore;
     }
+
+    console.log('moveBasedOnOponent', moveBasedOnOponent)
+    console.log('moveBasedOnMe', moveBasedOnMe)
+
+    if(!moveBasedOnOponent || !moveBasedOnMe) {
+      return {i: random(0, 6), j: random(0, 6)}
+    }
+
+    if(moveBasedOnOponent.counter === 1 && moveBasedOnMe.counter === 1){
+      return {i: random(0, 6), j: random(0, 6)}
+    }
+
+    if(moveBasedOnOponent.counter >= 3){
+      return moveBasedOnOponent.pos;
+    }
+
+    if(moveBasedOnMe.counter >= 3){
+      return moveBasedOnMe.pos;
+    }
+
+    if(moveBasedOnOponent.counter < 2){
+      return moveBasedOnMe.pos
+    }
+
+    if(moveBasedOnOponent.counter === 2 && moveBasedOnMe.counter === 2){
+      return moveBasedOnMe.pos;
+    }
+
+    if(moveBasedOnOponent.counter > moveBasedOnMe.counter){
+      return moveBasedOnOponent.pos;
+    }
+
+    console.log('aleatório')
+    return {i: random(0, 6), j: random(0, 6)}
+    //return moveBasedOnOponent.pos
 };
+
+function getBestPlay(currentBoard, i, j, counter, me, opponent, direction) {
+  if(!direction){
+    const res1 = getBestPlay(currentBoard, i, j, counter, me, opponent, [-1, 0])
+    const res2 = getBestPlay(currentBoard, i, j, counter, me, opponent, [1, 0])
+    const res3 = getBestPlay(currentBoard, i, j, counter, me, opponent, [0, -1])
+    const res4 = getBestPlay(currentBoard, i, j, counter, me, opponent, [0, 1])
+    const res5 = getBestPlay(currentBoard, i, j, counter, me, opponent, [-1, -1])
+    const res6 = getBestPlay(currentBoard, i, j, counter, me, opponent, [1, 1])
+    const res7 = getBestPlay(currentBoard, i, j, counter, me, opponent, [-1, 1])
+    const res8 = getBestPlay(currentBoard, i, j, counter, me, opponent, [1, -1])
+    
+    const resArray = [
+      res1,
+      res2,
+      res3,
+      res4,
+      res5,
+      res6,
+      res7,
+      res8,
+    ]
+
+    const max = Math.max(Math.max(...resArray.map(item => item.counter)));
+    let index = -1
+
+    for (let i = 0; i < resArray.length; i++) {
+      if(resArray[i].counter === max) {
+        index = i;
+        break;
+      }  
+    }
+    return resArray[index];
+  }else{
+    if(!checkBounds(currentBoard, i + direction[0], j + direction[1])) return {counter: -1, pos: {i, j}};
+
+    if(currentBoard[i + direction[0]][j + direction[1]] === opponent){
+      return getBestPlay(currentBoard, i + direction[0], j + direction[1], counter + 1, me, opponent, direction)
+    }else if(currentBoard[i + direction[0]][j + direction[1]] === me){
+      return {counter: -1, pos: {i: i + direction[0], j: j + direction[1]}}
+    }else{
+      return {counter, pos: {i: i + direction[0], j: j + direction[1]}};
+    }
+  }
+}
+
+function checkBounds(currentBoard, i, j){
+  if(i < 0 || i > currentBoard.length - 1) return false;
+  if(j < 0 || j > currentBoard[0].length - 1) return false;
+
+  return true;
+}
+
+// checar se vai ganhar na próxima
+// escolher melhor caminho que tenha espaço para jogar
