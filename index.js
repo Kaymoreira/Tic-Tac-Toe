@@ -22,6 +22,7 @@ const SPACE_SIZE = 64.28571428571429
 let gameOver = false
 let currentPlayer
 let currentBoard
+let firstPlay = true
 
 const xImage = new Image()
 xImage.src = 'img/X.png'
@@ -65,12 +66,13 @@ while(true){
   if(gameOver) break;
 
   if(currentBoard && data && currentPlayer === data.secondPlayer){
-    const {i, j} = IAPlay(currentBoard, data.firstPlayer, data.secondPlayer)
+    const {i, j} = IAPlay(currentBoard, data.firstPlayer, data.secondPlayer, firstPlay)
     console.log({i, j})
     const res = play(i, j, data.ctx, data.firstPlayer, data.secondPlayer, currentPlayer)
     currentPlayer = res.currentPlayer;
     gameOver = res.gameOver
     currentBoard = res.board
+    firstPlay = false
   }
   await sleep(200)
 }
