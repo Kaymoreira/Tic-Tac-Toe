@@ -3,8 +3,8 @@ import {random} from './helpers/general.js'
 
 function printTable(table){
   let s = ''
-  for (let i = 0; i < 6; i++) {
-    for (let j = 0; j < 6; j++) {
+  for (let i = 0; i < 7; i++) {
+    for (let j = 0; j < 7; j++) {
       s =`${s} ${table[i][j] === '' ? '-': table[i][j]}`
     }
     s =`${s}\n`
@@ -18,13 +18,29 @@ export function IAPlay(currentBoard, firstPlayer, secondPlayer, firstPlay) {
     if(firstPlay){
       return {i: random(0, 6), j: random(0, 6)}
     }
-    
+
+    const resCheckWin = checkWin(currentBoard, secondPlayer)
+    if(resCheckWin){
+      return resCheckWin;
+    }
+
+    const resCheckEnemyWin = checkWin(currentBoard, firstPlayer)
+    if(resCheckEnemyWin){
+      return resCheckEnemyWin;
+    }
+
+    const resCheckCheck = checkCheck(currentBoard, firstPlayer, secondPlayer)
+    if(resCheckCheck){
+      console.log('check', checkCheck)
+      return resCheckCheck;
+    }
+
     // AI to make its turn
     let moveBasedOnOponent;
     let moveBasedOnMe;
 
-    for (let i = 0; i < 6; i++) {
-      for (let j = 0; j < 6; j++) {
+    for (let i = 0; i < 7; i++) {
+      for (let j = 0; j < 7; j++) {
         if(currentBoard[i][j] === firstPlayer.character){
           const bestPlay = getBestPlay(currentBoard, i, j, 1, secondPlayer.character, firstPlayer.character, undefined, true)
 
@@ -35,8 +51,8 @@ export function IAPlay(currentBoard, firstPlayer, secondPlayer, firstPlay) {
       }
     }
 
-    for (let i = 0; i < 6; i++) {
-      for (let j = 0; j < 6; j++) {
+    for (let i = 0; i < 7; i++) {
+      for (let j = 0; j < 7; j++) {
         if(currentBoard[i][j] === firstPlayer.character){
           const bestPlay = getBestPlay(currentBoard, i, j, 1, firstPlayer.character, secondPlayer.character, undefined, false)
 
@@ -107,8 +123,6 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
       res8,
     ]
 
-    console.log(resArray)
-
 
     const max = Math.max(...resArray.map(item => item.counter));
     //let index = -1
@@ -162,6 +176,8 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
       }
     }
 
+    // substituir theBestIndex por array e checar qual das jogadas me da um melhor counter
+
     if(theBestIndex === null){
       resArray[onlyTheBest[0]].counter = -1;
       theBestIndex = 0;
@@ -183,6 +199,55 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
   }
 }
 
+function checkWin(currentBoard, player){
+  for (let i = 0; i < 7; i++) {
+    for (let j = 0; j < 7; j++) {
+      const auxBoard = JSON.parse(JSON.stringify(currentBoard))
+      
+      if(auxBoard[i][j] != '') continue;
+
+      auxBoard[i][j] = player.character
+
+      const wins = isWinner(auxBoard, player)
+        
+      if(wins) {
+        return {i, j}
+      }
+    } 
+  }    
+
+  return;
+}
+
+function checkCheck(currentBoard, firstPlayer, secondPlayer){
+  for (let i = 0; i < 7; i++) {
+    for (let j = 0; j < 7; j++) {
+      const auxBoard = JSON.parse(JSON.stringify(currentBoard))
+      
+      if(auxBoard[i][j] != '') continue;
+
+      auxBoard[i][j] = secondPlayer.character
+
+      let bestPlay
+      for (let x = 0; x < 7; x++) {
+        for (let y = 0; y < 7; y++) {
+          const res = getBestPlay(auxBoard, x, y, 1, secondPlayer.character, firstPlayer.character, undefined, true)
+          if(res.counter > bestPlay?.counter){
+            bestPlay = res
+          }
+        }
+      }
+      
+        
+      if(bestPlay && bestPlay.counter >= 3) {
+        return bestPlay.pos;
+      }
+    } 
+  }    
+
+  return;
+}
+
 function checkBounds(currentBoard, i, j){
   if(i < 0 || i > currentBoard.length - 1) return false;
   if(j < 0 || j > currentBoard[0].length - 1) return false;
@@ -191,4 +256,4 @@ function checkBounds(currentBoard, i, j){
 }
 
 // checar se vai ganhar na próxima
-// escolher melhor caminho que tenha espaço para jogar
+// escolher melhor caminho que tenha espaço para jogar - V
