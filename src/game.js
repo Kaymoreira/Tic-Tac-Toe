@@ -1,16 +1,6 @@
 import {drawBoard, drawOnBoard} from './helpers/board.js'
 import {isTie, isWinner} from './helpers/check.js'
 
-let board = [
-  ['', '', '', '', '', '', ''],
-  ['', '', '', '', '', '', ''],
-  ['', '', '', '', '', '', ''],
-  ['', '', '', '', '', '', ''],
-  ['', '', '', '', '', '', ''],
-  ['', '', '', '', '', '', ''],
-  ['', '', '', '', '', '', ''],
-]
-
 const COLUMNS = 7
 const ROWS = 7
 const SPACE_SIZE = 64.28571428571429
@@ -20,19 +10,17 @@ export function showGameOver(player) {
   let imgSrc = `img/${player}G.png`
 
   const gameOverElement = document.getElementById('gameover')
-  const headerElement = document.getElementById('header')
 
   gameOverElement.innerHTML = `
     <h1>${message}</h1>
     <img class='winner-img' src=${imgSrc} </img>
-    <div class='play' onclick='location.reload()'>Jogar novamente</div>
+    <button class='play' onclick='location.href = "/"'>Jogar novamente</button>
   `
 
   gameOverElement.classList.remove('hide')
-  headerElement.classList.add('hide')
 }
 
-export function play(i, j, ctx, firstPlayer, secondPlayer, currentPlayer) {
+export function play(board ,i, j, ctx, player, ia, currentPlayer) {
   let gameOver = false
   if(board[i][j] !== '') return {currentPlayer, gameOver: false, board}
 
@@ -53,17 +41,17 @@ export function play(i, j, ctx, firstPlayer, secondPlayer, currentPlayer) {
   }
 
   return {
-    currentPlayer: currentPlayer === firstPlayer ? secondPlayer : firstPlayer,
+    currentPlayer: currentPlayer === player ? ia : player,
     gameOver,
     board
   }
 }
 
-export function init(firstPlayer, secondPlayer) {
+export function init(player, ia) {
   const canvas = document.getElementById('cvs')
   const ctx = canvas.getContext('2d')
 
   drawBoard(ctx, SPACE_SIZE, ROWS, COLUMNS)
 
-  return {canvas, ctx, firstPlayer, secondPlayer}
+  return {canvas, ctx, player, ia}
 }

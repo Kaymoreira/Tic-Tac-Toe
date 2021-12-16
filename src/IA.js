@@ -13,25 +13,24 @@ function printTable(table){
   console.log(s)
 }
 
-export function IAPlay(currentBoard, firstPlayer, secondPlayer, firstPlay) {
+export function IAPlay(currentBoard, player, ia, firstPlay) {
 
     if(firstPlay){
       return {i: random(0, 6), j: random(0, 6)}
     }
 
-    const resCheckWin = checkWin(currentBoard, secondPlayer)
+    const resCheckWin = checkWin(currentBoard, ia)
     if(resCheckWin){
       return resCheckWin;
     }
 
-    const resCheckEnemyWin = checkWin(currentBoard, firstPlayer)
+    const resCheckEnemyWin = checkWin(currentBoard, player)
     if(resCheckEnemyWin){
       return resCheckEnemyWin;
     }
 
-    const resCheckCheck = checkCheck(currentBoard, firstPlayer, secondPlayer)
+    const resCheckCheck = checkCheck(currentBoard, player, ia)
     if(resCheckCheck){
-      console.log('check', checkCheck)
       return resCheckCheck;
     }
 
@@ -41,8 +40,8 @@ export function IAPlay(currentBoard, firstPlayer, secondPlayer, firstPlay) {
 
     for (let i = 0; i < 7; i++) {
       for (let j = 0; j < 7; j++) {
-        if(currentBoard[i][j] === firstPlayer.character){
-          const bestPlay = getBestPlay(currentBoard, i, j, 1, secondPlayer.character, firstPlayer.character, undefined, true)
+        if(currentBoard[i][j] === player.character){
+          const bestPlay = getBestPlay(currentBoard, i, j, 1, ia.character, player.character, undefined, true)
 
           if(!moveBasedOnOponent || bestPlay.counter > moveBasedOnOponent.counter) {
             moveBasedOnOponent = bestPlay;
@@ -53,8 +52,8 @@ export function IAPlay(currentBoard, firstPlayer, secondPlayer, firstPlay) {
 
     for (let i = 0; i < 7; i++) {
       for (let j = 0; j < 7; j++) {
-        if(currentBoard[i][j] === firstPlayer.character){
-          const bestPlay = getBestPlay(currentBoard, i, j, 1, firstPlayer.character, secondPlayer.character, undefined, false)
+        if(currentBoard[i][j] === ia.character){
+          const bestPlay = getBestPlay(currentBoard, i, j, 1, player.character, ia.character, undefined, false)
 
           if(!moveBasedOnMe || bestPlay.counter > moveBasedOnMe.counter) {
             moveBasedOnMe = bestPlay;
@@ -63,14 +62,9 @@ export function IAPlay(currentBoard, firstPlayer, secondPlayer, firstPlay) {
       }
     }
 
-    console.log('moveBasedOnOponent', moveBasedOnOponent)
-    console.log('moveBasedOnMe', moveBasedOnMe)
-
     if(!moveBasedOnOponent || !moveBasedOnMe) {
       return {i: random(0, 6), j: random(0, 6)}
     }
-
-    //return moveBasedOnMe.pos
 
     if(moveBasedOnMe.counter >= 3){
       return moveBasedOnMe.pos;
@@ -96,7 +90,6 @@ export function IAPlay(currentBoard, firstPlayer, secondPlayer, firstPlay) {
       return moveBasedOnOponent.pos;
     }
 
-    console.log('aleatório')
     return {i: random(0, 6), j: random(0, 6)}
     //return moveBasedOnOponent.pos
 };
@@ -123,7 +116,6 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
       res8,
     ]
 
-
     const max = Math.max(...resArray.map(item => item.counter));
     //let index = -1
 
@@ -136,9 +128,9 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
         onlyTheBest.push(i)
       }  
     }
-
     
     let theBestIndex = null
+    let maxCounter = -1
 
     for (let i = 0; i < onlyTheBest.length; i++) {
       const jogadaAtual = resArray[onlyTheBest[i]]
@@ -147,21 +139,14 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
       let posAtual = jogadaAtual.pos;
       let canWin = true
 
-      //printTable(currentBoard)
-      //console.log('index', i)
-      //console.log({i: posAtual.i, j: posAtual.j})
       for (let j = 0; j < jogadasFaltantesParaGanhar; j++) {
         if(!checkBounds(currentBoard, posAtual.i + jogadaAtual.direction[0], posAtual.j + jogadaAtual.direction[1])) {
           canWin = false;
-          //console.log(canWin)
           continue;
         };
 
-        //console.log({i: posAtual.i + jogadaAtual.direction[0], j: posAtual.j + jogadaAtual.direction[1]})
-
         if(currentBoard[posAtual.i + jogadaAtual.direction[0]][posAtual.j + jogadaAtual.direction[1]] !== ''){
           canWin = false
-          //console.log(canWin)
           break;
         }
 
@@ -172,19 +157,32 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
       }
 
       if(canWin){
-        theBestIndex = i
+        const auxBoard = JSON.parse(JSON.stringify(currentBoard))
+
+        auxBoard[resArray[onlyTheBest[i]].pos.i][resArray[onlyTheBest[i]].pos.j] = avaluatingOponnent ? me : opponent
+
+        let bestPlay
+        for (let i = 0; i < 7; i++) {
+          for (let j = 0; j < 7; j++) {
+            const res = getBestPlay(auxBoard, i, j, 0, me, opponent, undefined, true)
+            if(!bestPlay?.counter || res?.counter > bestPlay?.counter){
+              bestPlay = res
+            }
+          }
+        }
+
+        if(bestPlay?.counter > maxCounter){
+          maxCounter = bestPlay?.counter
+          theBestIndex = i
+        }
       }
     }
-
-    // substituir theBestIndex por array e checar qual das jogadas me da um melhor counter
 
     if(theBestIndex === null){
       resArray[onlyTheBest[0]].counter = -1;
       theBestIndex = 0;
     }
 
-    //console.log('theBestIndex', theBestIndex)
-    //console.log('theBestIndex', resArray[onlyTheBest[theBestIndex]])
     return resArray[onlyTheBest[theBestIndex]];
   }else{
     if(!checkBounds(currentBoard, i + direction[0], j + direction[1])) return {counter: -1, pos: {i, j}, direction};
@@ -194,7 +192,7 @@ function getBestPlay(currentBoard, i, j, counter, me, opponent, direction, avalu
     }else if(currentBoard[i + direction[0]][j + direction[1]] === me){
       return {counter: -1, pos: {i: i + direction[0], j: j + direction[1]}, direction}
     }else{
-      return {counter: avaluatingOponnent ? counter : counter - 1 , pos: {i: i + direction[0], j: j + direction[1]}, direction};
+      return {counter: counter , pos: {i: i + direction[0], j: j + direction[1]}, direction};
     }
   }
 }
@@ -219,19 +217,19 @@ function checkWin(currentBoard, player){
   return;
 }
 
-function checkCheck(currentBoard, firstPlayer, secondPlayer){
+function checkCheck(currentBoard, player, ia){
   for (let i = 0; i < 7; i++) {
     for (let j = 0; j < 7; j++) {
       const auxBoard = JSON.parse(JSON.stringify(currentBoard))
       
       if(auxBoard[i][j] != '') continue;
 
-      auxBoard[i][j] = secondPlayer.character
+      auxBoard[i][j] = ia.character
 
       let bestPlay
       for (let x = 0; x < 7; x++) {
         for (let y = 0; y < 7; y++) {
-          const res = getBestPlay(auxBoard, x, y, 1, secondPlayer.character, firstPlayer.character, undefined, true)
+          const res = getBestPlay(auxBoard, x, y, 1, ia.character, player.character, undefined, true)
           if(res.counter > bestPlay?.counter){
             bestPlay = res
           }
@@ -254,6 +252,3 @@ function checkBounds(currentBoard, i, j){
 
   return true;
 }
-
-// checar se vai ganhar na próxima
-// escolher melhor caminho que tenha espaço para jogar - V

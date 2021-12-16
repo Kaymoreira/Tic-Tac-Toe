@@ -8,21 +8,15 @@
     <!-- STYLES -->
     <link rel="stylesheet" href="./style.css" />
 
-    <script src="index.js" type="module"></script>
+    <script src="game.js" type="module"></script>
   </head>
   <body>
-    
     <header><div id="header" class="header hide">Tic Tac Toe</div></header>
 
     <div class="container">
-      <div id="options" class="options">
-        <div>
-          <h3>Quem começa ?</h3>
-          <button id="ButtonIa">IA</button>
-          <button id="ButtonPlayer">Jogador</button>
-        </div>
-      </div>
-      <div id="gameover" class="gameover hide"></div>
+      <canvas id="cvs" width="450" height="450"> </canvas>
+
+      <div id="gameover" />
     </div>
   </body>
 </html>
